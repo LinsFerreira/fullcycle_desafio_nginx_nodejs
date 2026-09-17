@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: always
+    tty: true
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nodedb
+    ports:
+      - "3306:3306"
+    networks:
+      - node-network
+
+  app:
+    build:
+      context: ./node
+    container_name: app
+    entrypoint: [ "npm", "start" ]
+    volumes:
+      - ./node:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: nodedb
+    ports:
+      - "3000:3000"
+    networks:
+      - node-network
+    depends_on:
+      - db
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    ports:
+      - "8080:80"
+    networks:
+      - node-network
+    depends_on:
+      - app
+
+networks:
+  node-network:
+    driver: bridge
+
